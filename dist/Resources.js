@@ -3,8 +3,6 @@ function Resources(roomCtrl){
   this.hasNoEmptyExtensionsLeft = false;
 
 }
-
-
 Resources.prototype.findResource = function(){
   if(!this.roomCtrl.nextDroppedResourceTarget){
     var droppedResource;
@@ -61,7 +59,6 @@ Resources.prototype.findUnloadStation = function(creep){
   }
   for(var s in storages){
     var storage = storages[s]
-    //console.log(storage.store.energy , energy , storage.store.energy , storage.storeCapacity, structure, !structure && storage.store.energy < storage.storeCapacity)
     if(!structure && storage.store.energy < storage.storeCapacity){
       structure = storage;
       energy = storage.store.energy;
@@ -71,7 +68,8 @@ Resources.prototype.findUnloadStation = function(creep){
     }
   }
   for(var t in towers){
-    var tower = towers[t];
+
+    var tower = towers[t].tower;
     if(!structure && tower.energy < tower.energyCapacity){
       structure = tower;
       energy = tower.energy;
@@ -84,7 +82,7 @@ Resources.prototype.findUnloadStation = function(creep){
     return structure.id;
 }
 Resources.prototype.UnloadStation = function(creep, target){
-  actionCode = creep.transfer(target, RESOURCE_ENERGY)
+  var actionCode = creep.transfer(target, RESOURCE_ENERGY)
   if(actionCode == ERR_NOT_IN_RANGE) {
     if(creep.moveTo(target) == 0){
       creep.say(target.structureType)
@@ -92,6 +90,7 @@ Resources.prototype.UnloadStation = function(creep, target){
   }else{
     this.unClaimExtension(creep, target)
   }
+  return actionCode;
 }
 Resources.prototype.claimExtension = function(creep, resource){
   creep.memory.target = resource.id;
@@ -101,6 +100,16 @@ Resources.prototype.claimExtension = function(creep, resource){
 Resources.prototype.unClaimExtension = function(creep, resource){
   creep.memory.target = false
   this.roomCtrl.room.memory.extensions[resource.id] = false
+}
+Resources.prototype.claimSource = function(creep){
+  for(var name in this.roomCtrl.sources){
+    var sourceId = this.roomCtrl.sources[name].id;
+    if(!this.roomCtrl.room.memory.sources[sourceId]){
+      this.roomCtrl.room.memory.sources[sourceId] = creep.id
+      creep.setTarget(sourceId);
+      return;
+    }
+  }
 }
 
 module.exports = Resources;

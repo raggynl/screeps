@@ -32,9 +32,7 @@ Plan.prototype.infrastructureLevel2 = function(){    //Plan level 2 infastructur
     path1.push.apply(path1, path2)
     this.roomCtrl.room.memory.plan[this.roomCtrl.controller.level] = path1;
   }else if(this.roomCtrl.room.memory.plan[this.roomCtrl.controller.level].length){
-    var pos = this.roomCtrl.room.memory.plan[this.roomCtrl.controller.level][0]
-    this.roomCtrl.room.memory.plan[this.roomCtrl.controller.level].splice(0,1);
-    this.roomCtrl.room.createConstructionSite(pos.x ,pos.y, STRUCTURE_ROAD)
+      this.constructPlan()
   }
 }
 
@@ -47,12 +45,38 @@ Plan.prototype.infrastructureLevel3 = function(){    //Plan level 2 infastructur
     this.roomCtrl.room.memory.plan[this.roomCtrl.controller.level] = path1;
   }else if(this.roomCtrl.room.memory.plan[this.roomCtrl.controller.level] &&
             this.roomCtrl.room.memory.plan[this.roomCtrl.controller.level].length){
-    var pos = this.roomCtrl.room.memory.plan[this.roomCtrl.controller.level][0]
-    this.roomCtrl.room.memory.plan[this.roomCtrl.controller.level].splice(0,1);
-    this.roomCtrl.room.createConstructionSite(pos.x ,pos.y, STRUCTURE_ROAD)
+      this.constructPlan()
   }
 }
-
+Plan.prototype.infrastructureLevel4 = function(){    //Plan level 2 infastructure
+  if(!this.roomCtrl.room.memory.plan[this.roomCtrl.controller.level]){
+    var targets = []
+    targets.push(this.roomCtrl.spawns[0].pos.findClosestByRange(FIND_EXIT_TOP))
+    targets.push(this.roomCtrl.spawns[0].pos.findClosestByRange(FIND_EXIT_RIGHT))
+    targets.push(this.roomCtrl.spawns[0].pos.findClosestByRange(FIND_EXIT_BOTTOM))
+    targets.push(this.roomCtrl.spawns[0].pos.findClosestByRange(FIND_EXIT_LEFT))
+    var pos1 = this.roomCtrl.spawns[0].pos;
+    var path1 = [];
+    console.log(targets);
+    for(var t in targets){
+      var target = targets[t];
+      if(target){
+        var pos2 = target.pos;
+        console.log(target, pos1, pos2)
+        path1.push.apply(path1, this.roomCtrl.room.findPath(pos1, target, {ingoreCreep : true, heuristicWeighht: 1000}))
+      }
+    }
+    this.roomCtrl.room.memory.plan[this.roomCtrl.controller.level] = path1;
+  }else if(this.roomCtrl.room.memory.plan[this.roomCtrl.controller.level] &&
+            this.roomCtrl.room.memory.plan[this.roomCtrl.controller.level].length){
+              this.constructPlan()
+  }
+}
+Plan.prototype.constructPlan = function(){
+  var pos = this.roomCtrl.room.memory.plan[this.roomCtrl.controller.level][0]
+  this.roomCtrl.room.memory.plan[this.roomCtrl.controller.level].splice(0,1);
+  this.roomCtrl.room.createConstructionSite(pos.x ,pos.y, STRUCTURE_ROAD)
+}
 Plan.prototype.infrastructure = function(){
   if(!this.roomCtrl.controller)return
   switch (this.roomCtrl.controller.level) {
@@ -65,6 +89,9 @@ Plan.prototype.infrastructure = function(){
     case 3:
       this.infrastructureLevel3();
       break;
+      case 4:
+        this.infrastructureLevel4();
+        break;
     default:
 
   }

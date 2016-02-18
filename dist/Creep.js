@@ -16,10 +16,14 @@ Creep.prototype.onDeath = function onDeath(){
 	this.say("I'm Dead")
 	this.memory = "dead"
 }
-Creep.prototype.needRecharge = function needRecharge(level){
-  var target = Game.spawns.Spawn1;
+Creep.prototype.needRecharge = function needRecharge(level, roomCtrl){
+  var target = roomCtrl.spawns[0];
+  if(!target)return false;
   if(!this.memory.level)return false;
   if(this.memory.level < level)return false
+  if(level < 3)return false
+  if(this.memory.world)return false
+  if(!this.memory.room)return false
   if(this.ticksToLive < 100 || this.memory.recharging){
     this.memory.recharging = true;
     this.say("recharging")

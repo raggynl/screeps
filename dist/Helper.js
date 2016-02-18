@@ -20,6 +20,16 @@ Helper.prototype.garbageCollector = function(){
         }
       }
     }
+    for(var e in Memory.rooms[r].extensions){
+      if(Memory.rooms[r].extensions[e]){
+        var c = Game.getObjectById(Memory.rooms[r].extensions[e]);
+        if(c.memory.target != e) {
+
+          Memory.rooms[r].extensions[e]= false;
+          counter++;
+        }
+      }
+    }
 	}
   if(counter > 0)
     console.log("*****removed "+ counter + " from memory*****")

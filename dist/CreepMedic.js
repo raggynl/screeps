@@ -1,4 +1,4 @@
-function CreepMedic(creep, room){
+function CreepMedic(creep, room, world){
   this.creep = creep;
   this.roomCtrl = room;
 }

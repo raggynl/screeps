@@ -1,4 +1,4 @@
-function CreepCollector(creep, room){
+function CreepCollector(creep, room, world){
   this.creep = creep;
   this.roomCtrl = room;
 }
@@ -14,23 +14,28 @@ CreepCollector.prototype.act = function(){
         }
       }
     }else if(target.structureType){
-      this.roomCtrl.Resources.UnloadStation(this.creep, target)
-      // actionCode = this.creep.transfer(target, RESOURCE_ENERGY)
-      // if(actionCode == ERR_NOT_IN_RANGE) {
-      //   if(this.creep.moveTo(target) == 0){
-      //     this.creep.say(target.structureType)
-      //   }
-      // }
+      actionCode = this.roomCtrl.resources.UnloadStation(this.creep, target)
     }
     if(actionCode && actionCode != ERR_NOT_IN_RANGE){
       this.creep.deleteTarget();
     }
   }
 
-  else{
+  else {
     this.creep.say( "work?")
     //No target could be found. Creep is jobless.
-    //See if creep is elsewhere needed in the world?
+    //See if creep can refill extensions with stored energy
+    var transfer = this.roomCtrl.resources.findUnclaimedExtension()
+    if(transfer){
+      var storage = this.roomCtrl.storages[0];
+      if(storage && this.creep.carry.energy == 0 && storage.store.energy > this.creep.carryCapacity){
+        if(storage.transfer(this.creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+          this.creep.moveTo(storage);
+        }
+      }else{
+        this.roomCtrl.resources.claimExtension(this.creep, transfer)
+      }
+    }
   }
 
 }
@@ -39,13 +44,13 @@ CreepCollector.prototype.findTarget = function(){
   if(!target && this.creep.carry.energy > 0){
     target = Game.getObjectById(
                   this.creep.setTarget(
-                      this.roomCtrl.Resources.findUnloadStation(this.creep)
+                      this.roomCtrl.resources.findUnloadStation(this.creep)
                     ));
   }
   if(!target && this.creep.carry.energy != this.creep.carryCapacity){
     target = Game.getObjectById(
                   this.creep.setTarget(
-                      this.roomCtrl.Resources.findResource()
+                      this.roomCtrl.resources.findResource()
                     ));
   }
   return target;

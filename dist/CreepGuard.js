@@ -1,4 +1,4 @@
-function CreepGuard(creep, room){
+function CreepGuard(creep, room, world){
   this.creep = creep;
   this.roomCtrl = room;
 }

@@ -1,0 +1,21 @@
+
+
+CreepBuilder
+  refactor code cleanup?
+CreepHarvester
+  worldAct behavior
+
+CreepCollector
+  worldAct behavior
+
+CreepClaimer
+  claim a unowned controller
+
+CreepScout
+  Scout for new rooms to be analyzed so it may be used by the world controller
+
+WorldController
+  choose what room to explore next
+  request (world)harvester for unclaimed sources in uncontrolled rooms
+  request (world)collector for unclaimed resources in uncontrolled rooms
+  request claimer to claim controller

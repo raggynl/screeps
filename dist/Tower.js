@@ -5,17 +5,24 @@ function Tower(tower, roomCtrl){
 
 
 Tower.prototype.act = function(){
+
+
   var target= this.findTarget();
-  if(target){
-
-      this.tower.repair(target);
-    
-
+  var enemies = this.roomCtrl.hostileCreeps;
+  var enemy;
+  if(targets.length > 0)enemy = enemies[0]
+  if(enemy){
+    this.tower.attack(target);
+  }
+  else if(target){
+    this.tower.repair(target);
   }
 }
 
 Tower.prototype.findTarget = function(){
-  var targets = this.roomCtrl.room.find(FIND_STRUCTURES, {
+
+
+  targets = this.roomCtrl.room.find(FIND_STRUCTURES, {
     filter: object => object.hits < object.hitsMax
   });
 

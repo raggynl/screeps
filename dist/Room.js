@@ -1,38 +1,17 @@
-var CreepFactory = require('CreepFactory');
 var Blueprints = require('Blueprints');
+var CreepFactory = require('CreepFactory');
+var Resources = require('Resources');
 var Plan = require('Plan');
 var Tower = require('Tower');
-var Resources = require('Resources');
+
+var maxExtensions = [0, 0, 5, 10, 20, 30, 40, 50, 60];
+var exits = [FIND_EXIT_TOP, FIND_EXIT_RIGHT, FIND_EXIT_BOTTOM, FIND_EXIT_LEFT];
 
 
-
-function RoomController(room){
+function RoomController(room, worldCtrl){
+  this.worldCtrl = worldCtrl;
   this.room = room;
   this.controller = room.controller;
-
-  this.creepTypeCount = {
-    "harvester" : 0,
-    "collector" : 0,
-    "builder" : 0,
-    "upgrader" : 0,
-    "guard" : 0,
-    "soldier" : 0,
-    "medic" : 0,
-    "claimer" : 0
-  };
-  this.creeps = [];
-  this.towers = [];
-  this.storages = [];
-  this.hostileCreeps = [];
-  this.structures = [];
-  this.spawns = [];
-  this.extensions = [];
-  this.sources = [];
-  this.droppedResources = [];
-
-  this.hasOrder = false;
-  this.nextUnloadTarget;
-  this.nextDroppedResourceTarget;
 
   if(this.room.memory){
     if(!this.room.memory.sources){
@@ -44,43 +23,87 @@ function RoomController(room){
     if(!this.room.memory.extensions){
       this.room.memory.extensions = {}
     }
+    if(!this.room.memory.scoutedExits){
+      this.room.memory.scoutedExits = []
+    }
   }
-
-  this.level = this.controller.level;
-  var needExt = ((this.level-1)*5)
-  if(this.extensions.length < needExt || !this.room.memory.plan[this.level]){
-    this.level = this.controller.level - 1
-  }
-
+  this.creepTypeCount = {
+    "harvester" : 0,
+    "collector" : 0,
+    "builder" : 0,
+    "upgrader" : 0,
+    "guard" : 0,
+    "soldier" : 0,
+    "medic" : 0,
+    "claimer" : 0,
+    "scout" : 0
+  };
+  this.creeps = [];//Creeps that are controlled by the RoomController.
+  this.towers = [];
+  this.storages = [];
+  this.hostileCreeps = this.room.find(FIND_HOSTILE_CREEPS);
+  this.constructions = this.room.find(FIND_CONSTRUCTION_SITES);
+  this.flags = this.room.find(FIND_FLAGS);
+  this.structures = [];
+  this.spawns = [];
+  this.extensions = [];
+  this.sources = [];
+  this.droppedResources = [];
+  this.hasOrder = false;
   this.loadCreeps();
   this.loadStructures();
+
   this.loadSources();
-  this.loadEnemyCreeps();
   this.loadDroppedResourses();
+  if(this.controller){
+    this.level = this.controller.level;
+    var needExt = maxExtensions[this.level];
+    if(this.extensions.length < needExt || !this.room.memory.plan[this.level]){
+      this.level = this.controller.level - 1;
+    }
+
+    this.plan = new Plan(this);
 
 
-  // console.log(this.nextUnloadTarget);
-  this.Plan = new Plan(this);
-  this.Resources = new Resources(this);
+  }
+
+
+  this.resources = new Resources(this);
 }
-
+RoomController.prototype.requestCreep = function(target, creepRole){
+  for(var c in this.creeps){
+    var creep = this.creeps[c];
+    if(creep.creep.memory.role == creepRole && creep.creep.carry.energy == creep.creep.carryCapacity)
+      creep.creep.memory.target.id
+      return true;
+  }
+  return false
+}
+RoomController.prototype.findNextExit= function(creep){
+  if(this.room.memory.scoutedExits.length < 4){
+    console.log("find next path", this.room.memory.scoutedExits.length, exits);
+    var scout = exits[this.room.memory.scoutedExits.length]
+    console.log("find next path", scout);
+    return {exit : scout, target : creep.pos.findClosestByPath(scout)}
+  }
+}
 RoomController.prototype.colonize = function(){
-  var order;
   if(!this.controller)return
+  var order;
   var level = 1;
+  var options = {};
+  options.room = this.room.name;
   if(this.creepTypeCount.harvester < 1 && this.creeps.length < 2){
     order ="harvester";
-
   }else if(this.creepTypeCount.collector < 1 && this.creeps.length < 2){
     order ="collector";
 
   }else if(this.creeps.length < 20){
     level = this.level;
 
-    if(this.creepTypeCount.harvester < 2){
+    if(this.creepTypeCount.harvester < this.sources.length){
       order ="harvester";
-
-    }else if(this.creepTypeCount.collector < 2){
+    }else if(this.creepTypeCount.collector < this.sources.length){
       order ="collector";
 
     }else if(this.creepTypeCount.builder < 2){
@@ -89,10 +112,18 @@ RoomController.prototype.colonize = function(){
       order ="upgrader";
     }
     if(!order && level >= 2){
-      if(this.creepTypeCount.collector < 3){
+      if(this.creepTypeCount.collector < this.sources.length+1){
         order ="collector";
       }
-
+    }
+    if(!order && level >= 3){
+      if(this.creepTypeCount.scout < 1 && this.room.memory.scoutedExits.length == 0){
+        order ="scout";
+      }else if(this.creepTypeCount.claimer < 1 && this.room.memory.scoutedExits.length == exits.length && Game.gcl.level == this.worldCtrl.rooms.length+1){
+        order ="claimer";
+      }else if(this.creepTypeCount.upgrader < 5 && this.storages[0].store > 5000){
+        order ="upgrader";
+      }
     }
 
     // else if(this.creepTypeCount.claimer < 1){
@@ -112,87 +143,61 @@ RoomController.prototype.colonize = function(){
     console.log("order",order, level)
 
     console.log(this.room.name, this.creeps.length, JSON.stringify(this.creepTypeCount));
-    for(var name in Game.spawns){
-      var isBuilding = Blueprints(this.spawns[0], order, level);
+    for(var name in this.spawns){
+      var isBuilding = Blueprints(this.spawns[name], order, level, options);
       if(isBuilding)return;
     }
   }
 
-}
-RoomController.prototype.handleCreeps = function(){
 
-  for(var c in this.creeps){
-    var creep = this.creeps[c];
 
-    if(!creep.creep.needRecharge(this.level)){
-      creep.act();
+  //build a new coleny
+  if(this.controller.my){
+    if(this.spawns.length == 0 && this.flags.length > 0){
+      console.log("Construction of new room spawn initiated")
+      if(this.flags[0].name == "claim"){
+        this.room.createConstructionSite(this.flags[0].pos.x, this.flags[0].pos.y, STRUCTURE_SPAWN)
+        this.flags[0].destroy();
+      }
     }
-
-
+    else if(this.spawns.length == 0 && this.constructions > 0 && this.creepTypeCount.builder == 0){
+      console.log("Requesting builder to start building here")
+      this.world.requestCreep(this.constructions[0], "builder")
+    }
   }
+
 }
-RoomController.prototype.handleTowers = function(){
-  for(var t in this.towers){
-    var tower = this.towers[t];
-    tower.act();
-  }
-}
+
 RoomController.prototype.loadCreeps = function(){
   var creeps = this.room.find(FIND_MY_CREEPS);
   for(var name in creeps){
     var creep = CreepFactory(creeps[name], this);
     if(creep){
-      this.creeps.push(creep);
-      this.creepTypeCount[creep.creep.getRole()]++;
+      if(creep.creep.memory.world){
+        this.worldCtrl.addCreepToWorld(creep)
+      }else{
+        this.creeps.push(creep);
+        this.creepTypeCount[creep.creep.getRole()]++;
+      }
     }
 
   }
+  this.room.memory.creepCount = this.creepTypeCount;
 }
 RoomController.prototype.loadStructures = function(){
   var structures = this.room.find(FIND_MY_STRUCTURES);
   for(var name in structures){
     var structure = structures[name];
     if(structure.structureType == "spawn"){
-      if(!this.nextUnloadTarget){
-        this.nextUnloadTarget = structure
-      }
-      else if(structure.energy < structure.energyCapacity &&
-      ((structure.structureType  == "storage" && structure.energy < this.nextUnloadTarget.storage.energy) ||
-      (structure.structureType  != "storage" && structure.energy < this.nextUnloadTarget.energy))){
-        this.nextUnloadTarget = structure
-      }
       this.spawns.push(structure)
     }
     else if(structure.structureType == "storage"){
-      //console.log(structure.store.energy , structure.storeCapacity , structure.store.energy , this.nextUnloadTarget.energy)
-      if(!this.nextUnloadTarget){
-        this.nextUnloadTarget = structure
-        //console.log("store")
-      }else if(structure.store.energy < structure.storeCapacity && structure.store.energy < this.nextUnloadTarget.energy){
-        this.nextUnloadTarget = structure
-      }
       this.storages.push(structure)
     }
     else if(structure.structureType == "extension"){
-
-      if(!this.nextUnloadTarget){
-        this.nextUnloadTarget = structure
-       }else if(structure.energy < structure.energyCapacity &&
-       ((structure.structureType  == "storage" && structure.energy <= this.nextUnloadTarget.storage.energy) ||
-       (structure.structureType  != "storage" && structure.energy <= this.nextUnloadTarget.energy))){
-         this.nextUnloadTarget = structure
-       }
       this.extensions.push(structure)
     }
     else if(structure.structureType == "tower"){
-
-      if(!this.nextUnloadTarget){
-        this.nextUnloadTarget = structure
-      }else if(structure.energy < structure.energyCapacity &&
-      ((structure.structureType  == "storage" && structure.energy <= this.nextUnloadTarget.storage.energy) ||
-      (structure.structureType  != "storage" && structure.energy <= this.nextUnloadTarget.energy))){
-        this.nextUnloadTarget = structure
-      }
       this.towers.push(new Tower(structure, this))
     }
     else if(structure.structureType == "controller"){
@@ -200,12 +205,7 @@ RoomController.prototype.loadStructures = function(){
     }else{
       this.structures.push(structure)
     }
-
-
   }
-  //if(this.nextUnloadTarget)
-  // console.log("next unload",this.nextUnloadTarget.structureType);
-  // console.log("next unload on", this.nextUnloadTarget)
 }
 RoomController.prototype.loadDroppedResourses = function(){
   this.droppedResources = this.room.find(FIND_DROPPED_RESOURCES);
@@ -220,50 +220,20 @@ RoomController.prototype.loadSources = function(){
       this.room.memory.sources[sourceId] = false;
   }
 }
-RoomController.prototype.loadEnemyCreeps = function(){
-  var creeps = this.room.find(FIND_HOSTILE_CREEPS);
-}
-RoomController.prototype.assignSource = function(creep){
-  for(var name in this.sources){
-    var sourceId = this.sources[name].id;
-    if(!this.room.memory.sources[sourceId]){
-      this.room.memory.sources[sourceId] = creep.id
-      creep.setTarget(sourceId);
-      return;
+
+RoomController.prototype.creepsAct = function(){
+  for(var c in this.creeps){
+    var creep = this.creeps[c];
+    if(!creep.creep.needRecharge(this.level, this)){
+      creep.act();
     }
-    // else{
-    //   var creep = Game.getObjectById(this.room.memory.sources[sourceId])
-    //   if(creep){
-    //     this.room.memory.sources[sourceId] = false;
-    //   }else{
-    //     this.room.memory.sources[sourceId] = false;
-    //   }
-    // }
   }
 }
-RoomController.prototype.assignDroppedResources = function(){
-  if(!this.nextDroppedResourceTarget){
-    var droppedResource;
-    var droppedObject;
-
-    for(var name in this.droppedResources){
-
-      if(!droppedObject){
-        droppedObject = this.droppedResources[name];
-      }else if(droppedObject.amount < this.droppedResources[name].amount){
-        droppedObject = this.droppedResources[name];
-      }
-    }
-
-    if(droppedObject)
-      droppedResource = droppedObject.id
-    this.nextDroppedResourceTarget = droppedResource
-
+RoomController.prototype.towersAct = function(){
+  for(var t in this.towers){
+    var tower = this.towers[t];
+    tower.act();
   }
-  return this.nextDroppedResourceTarget;
-}
-RoomController.prototype.assignUnloadResources = function(){
-  return this.nextUnloadTarget.id
 }
 
 

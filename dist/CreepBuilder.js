@@ -1,11 +1,11 @@
-function CreepBuilder(creep, room){
+function CreepBuilder(creep, room, world){
   this.creep = creep;
   this.roomCtrl = room;
 }
 CreepBuilder.prototype.act = function(){
   var spawn = Game.spawns.Spawn1;
   var storage = this.roomCtrl.storages[0];
-  if(storage && this.creep.carry.energy == 0 && storage.store.energy > this.creep.carryCapacity){
+  if(storage && this.creep.carry.energy == 0  && storage.store.energy > 2000 && storage.store.energy > this.creep.carryCapacity){
     if(storage.transfer(this.creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
       this.creep.moveTo(storage);
 
@@ -57,6 +57,8 @@ CreepBuilder.prototype.act = function(){
       }else{
         this.creep.gotoFlag("build");
       }
+    }else{
+      this.creep.gotoFlag("build");
     }
   }
 }

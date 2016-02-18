@@ -7,7 +7,7 @@ var CreepUpgrader = require('CreepUpgrader');
 var CreepClaimer = require('CreepClaimer');
 var CreepBuilder = require('CreepBuilder');
 var CreepScout = require('CreepScout');
-function CreepFactory(creep, room){
+function CreepFactory(creep, room, world){
   switch (creep.memory.role) {
     case "harvester":
       return new CreepHarvester(creep, room);
