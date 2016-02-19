@@ -1,7 +1,7 @@
 var RoomController = require('Room');
 
 function WorldController(){
-  this.rooms =[];
+  this.rooms ={};
   this.creeps =[];//Creeps that are controlled to the World Controller instead of Room Controller
   //this.TotalCreepsCount;
   if(!Memory.world){
@@ -14,7 +14,7 @@ WorldController.prototype.loadRooms = function(){
   for(var name in Game.rooms) {
     var r = Game.rooms[name];
     var room = new RoomController(r, this);
-    this.rooms.push(room)
+    this.rooms[name] = room
 
   }
 }

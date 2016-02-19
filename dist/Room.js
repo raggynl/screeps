@@ -5,14 +5,13 @@ var Plan = require('Plan');
 var Tower = require('Tower');
 
 var maxExtensions = [0, 0, 5, 10, 20, 30, 40, 50, 60];
-var exits = [FIND_EXIT_TOP, FIND_EXIT_RIGHT, FIND_EXIT_BOTTOM, FIND_EXIT_LEFT];
 
 
 function RoomController(room, worldCtrl){
   this.worldCtrl = worldCtrl;
   this.room = room;
-  this.controller = room.controller;
 
+  this.controller = room.controller;
   if(this.room.memory){
     if(!this.room.memory.sources){
       this.room.memory.sources = {}
@@ -48,6 +47,8 @@ function RoomController(room, worldCtrl){
   this.spawns = [];
   this.extensions = [];
   this.sources = [];
+  this.exits = Game.map.describeExits(this.room.name);
+
   this.droppedResources = [];
   this.hasOrder = false;
   this.loadCreeps();
@@ -55,13 +56,12 @@ function RoomController(room, worldCtrl){
 
   this.loadSources();
   this.loadDroppedResourses();
-  if(this.controller){
+  if(this.controller && this.spawns.length > 0){
     this.level = this.controller.level;
     var needExt = maxExtensions[this.level];
     if(this.extensions.length < needExt || !this.room.memory.plan[this.level]){
       this.level = this.controller.level - 1;
     }
-
     this.plan = new Plan(this);
 
 
@@ -81,8 +81,8 @@ RoomController.prototype.requestCreep = function(target, creepRole){
 }
 RoomController.prototype.findNextExit= function(creep){
   if(this.room.memory.scoutedExits.length < 4){
-    console.log("find next path", this.room.memory.scoutedExits.length, exits);
-    var scout = exits[this.room.memory.scoutedExits.length]
+    console.log("find next path", this.room.memory.scoutedExits.length, this.exits);
+    var scout = this.exits[this.room.memory.scoutedExits.length]
     console.log("find next path", scout);
     return {exit : scout, target : creep.pos.findClosestByPath(scout)}
   }
@@ -101,7 +101,7 @@ RoomController.prototype.colonize = function(){
   }else if(this.creeps.length < 20){
     level = this.level;
 
-    if(this.creepTypeCount.harvester < this.sources.length){
+    if(this.creepTypeCount.harvester < 2){
       order ="harvester";
     }else if(this.creepTypeCount.collector < this.sources.length){
       order ="collector";
@@ -119,9 +119,9 @@ RoomController.prototype.colonize = function(){
     if(!order && level >= 3){
       if(this.creepTypeCount.scout < 1 && this.room.memory.scoutedExits.length == 0){
         order ="scout";
-      }else if(this.creepTypeCount.claimer < 1 && this.room.memory.scoutedExits.length == exits.length && Game.gcl.level == this.worldCtrl.rooms.length+1){
+      }else if(this.creepTypeCount.claimer < 1 && this.room.memory.scoutedExits.length == this.exits.length && Game.gcl.level == this.worldCtrl.rooms.length+1){
         order ="claimer";
-      }else if(this.creepTypeCount.upgrader < 5 && this.storages[0].store > 5000){
+      }else if(this.creepTypeCount.upgrader < 5 && this.storages.length > 0 && this.storages[0].store > 5000){
         order ="upgrader";
       }
     }
@@ -157,12 +157,12 @@ RoomController.prototype.colonize = function(){
       console.log("Construction of new room spawn initiated")
       if(this.flags[0].name == "claim"){
         this.room.createConstructionSite(this.flags[0].pos.x, this.flags[0].pos.y, STRUCTURE_SPAWN)
-        this.flags[0].destroy();
+        this.flags[0].remove()
       }
     }
-    else if(this.spawns.length == 0 && this.constructions > 0 && this.creepTypeCount.builder == 0){
+    else if(this.spawns.length == 0 && this.constructions.length > 0 && this.creepTypeCount.builder == 0){
       console.log("Requesting builder to start building here")
-      this.world.requestCreep(this.constructions[0], "builder")
+      this.worldCtrl.requestCreep(this.constructions[0], "builder")
     }
   }
 

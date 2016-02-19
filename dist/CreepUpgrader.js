@@ -24,7 +24,7 @@ CreepUpgrader.prototype.act = function(){
 			this.creep.moveTo(controller);
     }
   }else{
-    this.creep.gotoFlag('build')
+    //this.creep.gotoFlag('build')
   }
 }
 

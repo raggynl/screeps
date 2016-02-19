@@ -98,8 +98,8 @@ Resources.prototype.claimExtension = function(creep, resource){
 }
 
 Resources.prototype.unClaimExtension = function(creep, resource){
-  creep.memory.target = false
-  this.roomCtrl.room.memory.extensions[resource.id] = false
+  delete creep.memory.target
+  delete this.roomCtrl.room.memory.extensions[resource.id]
 }
 Resources.prototype.claimSource = function(creep){
   for(var name in this.roomCtrl.sources){
@@ -107,9 +107,10 @@ Resources.prototype.claimSource = function(creep){
     if(!this.roomCtrl.room.memory.sources[sourceId]){
       this.roomCtrl.room.memory.sources[sourceId] = creep.id
       creep.setTarget(sourceId);
-      return;
+      return true;
     }
   }
+  return false;
 }
 
 module.exports = Resources;

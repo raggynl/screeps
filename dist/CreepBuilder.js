@@ -3,15 +3,15 @@ function CreepBuilder(creep, room, world){
   this.roomCtrl = room;
 }
 CreepBuilder.prototype.act = function(){
-  var spawn = Game.spawns.Spawn1;
+  var spawn = this.roomCtrl.spawns[0];
   var storage = this.roomCtrl.storages[0];
   if(storage && this.creep.carry.energy == 0  && storage.store.energy > 2000 && storage.store.energy > this.creep.carryCapacity){
     if(storage.transfer(this.creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
       this.creep.moveTo(storage);
-
+      console.log(asd)
     }
   }
-  else if(!storage && this.creep.carry.energy == 0 && spawn.energy > this.creep.carryCapacity && !this.roomCtrl.hasOrder) {
+  else if(spawn && !storage && this.creep.carry.energy == 0 && spawn.energy > this.creep.carryCapacity && !this.roomCtrl.hasOrder) {
     if(spawn.transferEnergy(this.creep) == ERR_NOT_IN_RANGE) {
       this.creep.moveTo(spawn);
 
@@ -38,9 +38,9 @@ CreepBuilder.prototype.act = function(){
         if(!target || didBuild == 0){
           this.creep.deleteTarget();
         }else if(didBuild == 6){
-            this.creep.gotoFlag("build")
+            //this.creep.gotoFlag("build")
         }else{
-          this.creep.gotoFlag("build")
+          //this.creep.gotoFlag("build")
         }
       }
     }else if(this.roomCtrl.towers.length == 0 ){
@@ -55,10 +55,10 @@ CreepBuilder.prototype.act = function(){
             this.creep.moveTo(targets[0]);
         }
       }else{
-        this.creep.gotoFlag("build");
+        //creep.gotoFlag("build");
       }
     }else{
-      this.creep.gotoFlag("build");
+      //this.creep.gotoFlag("build");
     }
   }
 }
