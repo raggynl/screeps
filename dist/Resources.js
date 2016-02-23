@@ -44,6 +44,8 @@ Resources.prototype.findUnloadStation = function(creep){
   var spawns = this.roomCtrl.spawns;
   var storages = this.roomCtrl.storages;
   var towers = this.roomCtrl.towers;
+  var links = this.roomCtrl.links;
+  var creeps = this.roomCtrl.creeps;
   var structure;
   var energy = 0;
 
@@ -70,12 +72,36 @@ Resources.prototype.findUnloadStation = function(creep){
   for(var t in towers){
 
     var tower = towers[t].tower;
-    if(!structure && tower.energy < tower.energyCapacity){
+    if(!structure && tower.energy < tower.energyCapacity-200){
       structure = tower;
       energy = tower.energy;
-    }else if(tower.energy < energy && tower.energy < tower.energyCapacity){
+    }else if(tower.energy < energy && tower.energy < tower.energyCapacity-200){
       structure = tower;
       energy = tower.energy;
+    }
+  }
+  if(links.length >  0){
+    var link = links[0];
+    if(!structure && link.energy < link.energyCapacity){
+      structure = link;
+      energy = link.energy;
+    }else if(link.energy < energy && link.energy < link.energyCapacity-200){
+      structure = link;
+      energy = link.energy;
+    }
+  }else{
+    for(var c in creeps){
+
+      var creep = creeps[c].creep;
+      if(creep.memory.role == "upgrader"){
+        if(!structure && creep.carry.energy < creep.carryCapacity){
+          structure = creep;
+          energy = creep.carry.energy;
+        }else if(creep.carry.energy < energy && creep.carry.energy < creep.carryCapacity*0.75){
+          structure = creep;
+          energy = creep.carry.energy;
+        }
+      }
     }
   }
   if(structure)
@@ -85,7 +111,10 @@ Resources.prototype.UnloadStation = function(creep, target){
   var actionCode = creep.transfer(target, RESOURCE_ENERGY)
   if(actionCode == ERR_NOT_IN_RANGE) {
     if(creep.moveTo(target) == 0){
-      creep.say(target.structureType)
+      if(target.structureType)
+        creep.say(target.structureType)
+      else if(target.name)
+        creep.say(target.name)
     }
   }else{
     this.unClaimExtension(creep, target)

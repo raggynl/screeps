@@ -19,13 +19,13 @@ Plan.prototype.infrastructureLevel1 = function(){    //Plan level 1 infastructur
 }
 Plan.prototype.infrastructureLevel2 = function(){    //Plan level 2 infastructure
   if(!this.roomCtrl.room.memory.plan[this.roomCtrl.controller.level]){
-    if(!this.roomCtrl.sources[1]){
-      this.roomCtrl.room.memory.plan[this.roomCtrl.controller.level] = true;
-      return
+    var path1 = [];
+    if(this.roomCtrl.sources[1]){
+      var pos1 = this.roomCtrl.spawns[0].pos;
+      var pos2 = this.roomCtrl.sources[1].pos;//this.roomCtrl.spawns[0].pos.findClosestByRange(FIND_SOURCES).pos;
+      var path1 = this.roomCtrl.room.findPath(pos1, pos2, {ingoreCreep : true, heuristicWeighht: 1000})
     }
-    var pos1 = this.roomCtrl.spawns[0].pos;
-    var pos2 = this.roomCtrl.sources[1].pos;//this.roomCtrl.spawns[0].pos.findClosestByRange(FIND_SOURCES).pos;
-    var path1 = this.roomCtrl.room.findPath(pos1, pos2, {ingoreCreep : true, heuristicWeighht: 1000})
+
     pos1 = this.roomCtrl.spawns[0].pos;
     pos2 = this.roomCtrl.controller.pos;//this.roomCtrl.spawns[0].pos.findClosestByRange(FIND_SOURCES).pos;
     var path2 = this.roomCtrl.room.findPath(pos1, pos2, {ingoreCreep : true, heuristicWeighht: 1000})
@@ -40,7 +40,7 @@ Plan.prototype.infrastructureLevel3 = function(){    //Plan level 2 infastructur
   if(!this.roomCtrl.room.memory.plan[this.roomCtrl.controller.level] && this.roomCtrl.towers[0]){
     var pos1 = this.roomCtrl.spawns[0].pos;
     var pos2 = this.roomCtrl.towers[0].tower.pos;//this.roomCtrl.spawns[0].pos.findClosestByRange(FIND_SOURCES).pos;
-    console.log(this.roomCtrl.room, pos1, pos2)
+
     var path1 = this.roomCtrl.room.findPath(pos1, pos2, {ingoreCreep : true, heuristicWeighht: 1000})
     this.roomCtrl.room.memory.plan[this.roomCtrl.controller.level] = path1;
   }else if(this.roomCtrl.room.memory.plan[this.roomCtrl.controller.level] &&
@@ -57,12 +57,11 @@ Plan.prototype.infrastructureLevel4 = function(){    //Plan level 2 infastructur
     targets.push(this.roomCtrl.spawns[0].pos.findClosestByRange(FIND_EXIT_LEFT))
     var pos1 = this.roomCtrl.spawns[0].pos;
     var path1 = [];
-    console.log(targets);
+
     for(var t in targets){
       var target = targets[t];
       if(target){
         var pos2 = target.pos;
-        console.log(target, pos1, pos2)
         path1.push.apply(path1, this.roomCtrl.room.findPath(pos1, target, {ingoreCreep : true, heuristicWeighht: 1000}))
       }
     }

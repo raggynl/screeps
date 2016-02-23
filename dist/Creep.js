@@ -16,15 +16,17 @@ Creep.prototype.onDeath = function onDeath(){
 	this.say("I'm Dead")
 	this.memory = "dead"
 }
-Creep.prototype.needRecharge = function needRecharge(level, roomCtrl){
+Creep.prototype.needRecharge = function needRecharge(level, roomCtrl, ticks){
+  if(!ticks)ticks = 100
   var target = roomCtrl.spawns[0];
   if(!target)return false;
+  if(roomCtrl.totalStoredEnergy < 1000 )return false;
   if(!this.memory.level)return false;
   if(this.memory.level < level)return false
   if(level < 3)return false
   if(this.memory.world)return false
   if(!this.memory.room)return false
-  if(this.ticksToLive < 100 || this.memory.recharging){
+  if(this.ticksToLive < ticks || this.memory.recharging){
     this.memory.recharging = true;
     this.say("recharging")
     if(target.renewCreep(this) == ERR_NOT_IN_RANGE){
@@ -37,6 +39,56 @@ Creep.prototype.needRecharge = function needRecharge(level, roomCtrl){
   }
   return this.memory.recharging;
 }
+Creep.prototype.needRechargeOverride = function needRechargeOverride(level, roomCtrl, ticks){
+  if(!ticks)ticks = 100
+  var target = roomCtrl.spawns[0];
+  if(!target)return false;
+
+  if(this.ticksToLive < ticks || this.memory.recharging){
+    this.memory.recharging = true;
+    this.say("recharging")
+    if(target.renewCreep(this) == ERR_NOT_IN_RANGE){
+
+      this.moveTo(target);
+    }
+    if(this.ticksToLive > 1400){
+        this.memory.recharging = false;
+    }
+  }
+  return this.memory.recharging;
+}
+Creep.prototype.changeRoomCtrl = function changeRoomCtrl(roomName){
+  this.memory.room = roomName;
+}
+Creep.prototype.moveToRoom = function moveToRoom(roomName, roomCtrl){
+
+  if(this.room.name != roomName){
+
+    for(var e in roomCtrl.exits){
+      var exit = roomCtrl.exits[e];
+
+
+      if(exit == roomName){
+
+        var path = this.pos.findClosestByPath(parseInt(e))
+        var move = this.moveTo(path)
+        if(move == ERR_NOT_IN_RANGE){
+
+          this.say(roomName)
+          return true
+        }else if(move == 0){
+          this.say(roomName)
+          return true
+        }
+
+
+      }
+    }
+
+  }
+  return false;
+}
+
 Creep.prototype.lifeCycle = function lifeCyle(){
 	//clear out creep from memory databank
 	if(this.ticksToLive < 400)return true
@@ -57,4 +109,7 @@ Creep.prototype.gotoNearestFlag = function gotoNearestFlag(){
 }
 Creep.prototype.gotoFlag = function gotoFlag(name){
   this.moveTo(Game.flags[name])
+  if(Game.flags[name])
+    this.say(Game.flags[name].name +" flag")
+  return Game.flags[name];
 }

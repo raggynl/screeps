@@ -13,10 +13,9 @@ function CreepScout(creep, room, world){
 CreepScout.prototype.act = function(){
 
   var target = this.getTarget()
-  console.log("scout",JSON.stringify(target))
   if(target){
     this.creep.say("scout")
-    console.log("scout move", this.creep.moveTo(target.x, target.y));
+    this.creep.moveTo(target.x, target.y);
   }
 
 }
@@ -24,7 +23,6 @@ CreepScout.prototype.getTarget = function(){
     var target = this.creep.memory.scout.target
 
     if(!target && this.roomCtrl.controller && this.roomCtrl.controller.my){
-      console.log("new target")
       var scout = this.roomCtrl.findNextExit(this.creep)
       if(scout && scout.target == null){
         var roomMem = this.creep.memory.room
@@ -38,13 +36,12 @@ CreepScout.prototype.getTarget = function(){
     }
     else if(target && this.roomCtrl.room.name != this.creep.memory.room && this.creep.memory.scout.exit){
       var roomMem = this.creep.memory.room
-      console.log("room scouted",roomMem)
       Game.rooms[roomMem].memory.scoutedExits.push(this.creep.memory.scout.exit);
       delete this.creep.memory.scout
       target = null;
 
     }else{
-      console.log("sdf")
+      console.log("Scout job is done. Suicide")
       this.creep.suicide()
     }
     return target

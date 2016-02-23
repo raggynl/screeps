@@ -1,21 +1,10 @@
 
+request a creep builds a new creep instead of needing to keep extra idle creeps
 
-CreepBuilder
-  refactor code cleanup?
-CreepHarvester
-  worldAct behavior
+Room reservarions
 
-CreepCollector
-  worldAct behavior
+Improve claiming code
 
-CreepClaimer
-  claim a unowned controller
 
-CreepScout
-  Scout for new rooms to be analyzed so it may be used by the world controller
 
-WorldController
-  choose what room to explore next
-  request (world)harvester for unclaimed sources in uncontrolled rooms
-  request (world)collector for unclaimed resources in uncontrolled rooms
-  request claimer to claim controller
+Build analytics to see where we can improve code

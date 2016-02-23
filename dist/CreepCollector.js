@@ -1,8 +1,10 @@
 function CreepCollector(creep, room, world){
   this.creep = creep;
   this.roomCtrl = room;
+  this.worldCtrl = world
 }
 CreepCollector.prototype.act = function(){
+  if(this.creep.memory.roomRequest == this.creep.room.name)delete this.creep.memory.roomRequest
   var target = this.findTarget();
   if(target){
     var actionCode;
@@ -13,7 +15,7 @@ CreepCollector.prototype.act = function(){
           this.creep.say(target.resourceType)
         }
       }
-    }else if(target.structureType){
+    }else{
       actionCode = this.roomCtrl.resources.UnloadStation(this.creep, target)
     }
     if(actionCode && actionCode != ERR_NOT_IN_RANGE){
@@ -44,7 +46,7 @@ CreepCollector.prototype.findTarget = function(){
   if(!target && this.creep.carry.energy > 0){
     target = Game.getObjectById(
                   this.creep.setTarget(
-                      this.roomCtrl.resources.findUnloadStation(this.creep)
+                      this.worldCtrl.rooms[this.creep.memory.room].resources.findUnloadStation(this.creep)
                     ));
   }
   if(!target && this.creep.carry.energy != this.creep.carryCapacity){
@@ -55,7 +57,9 @@ CreepCollector.prototype.findTarget = function(){
   }
   return target;
 }
-
+CreepCollector.prototype.available = function(room){
+  return this.creep.carry.energy == 0 && (!this.creep.memory.roomRequest || this.creep.memory.roomRequest == room)
+}
 
 
 module.exports = CreepCollector

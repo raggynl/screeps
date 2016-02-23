@@ -12,9 +12,9 @@ Tower.prototype.act = function(){
   var enemy;
   if(targets.length > 0)enemy = enemies[0]
   if(enemy){
-    this.tower.attack(target);
+    this.tower.attack(enemy);
   }
-  else if(target){
+  else if(target && this.tower.energy > 500){
     this.tower.repair(target);
   }
 }

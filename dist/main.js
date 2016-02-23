@@ -11,4 +11,4 @@ module.exports.loop = function () {
   var world = new WorldController();
   world.act();
 }
-//console.log(JSON.stringify(Game.cpu))
+console.log(JSON.stringify(Game.cpu))
